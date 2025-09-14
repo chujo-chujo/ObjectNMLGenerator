@@ -31,52 +31,68 @@ settings = {
 	last_used_folder = default_path,
 	last_export_filename = "generated.nml",
 
-	toggle_last_used_folder = {
+	show_preview_file = {
 		index = 1,
+		state = "ON",
+		label = "  Show preview when hovering over file",
+	},
+	show_preview_snow = {
+		index = 2,
+		state = "ON",
+		label = "  Show preview when hovering over snow file",
+	},
+	show_preview_ground = {
+		index = 3,
+		state = "ON",
+		label = "  Show preview when hovering over ground file",
+	},
+	toggle_last_used_folder = {
+		index = 4,
 		state = "ON",
 		label = "  Remember last used folder",
 	},
 	toggle_last_export_filename = {
-		index = 2,
+		index = 5,
 		state = "ON",
 		label = "  Remember last export filename",
 	},
 	ask_exit = {
-		index = 3,
+		index = 6,
 		state = "ON",
 		label = "  Confirm before closing",
 	},
 	ask_overwrite_object = {
-		index = 4,
+		index = 7,
 		state = "ON",
 		label = "  Confirm before object overwrite",
 	},
 	ask_remove_object = {
-		index = 5,
+		index = 8,
 		state = "ON",
 		label = "  Confirm object removal",
 	},
 	ask_reset = {
-		index = 6,
+		index = 9,
 		state = "ON",
 		label = "  Confirm before resetting values",
 	},
 	ask_open = {
-		index = 7,
+		index = 10,
 		state = "ON",
 		label = "  Confirm before opening YAML file",
 	},
 	ask_overwrite_nml = {
-		index = 8,
+		index = 11,
 		state = "ON",
 		label = "  Confirm overwriting NML file",
 	},
 	warn_empty_header = {
-		index = 9,
+		index = 12,
 		state = "ON",
 		label = "  Warn about missing GRF block fields",
 	},
 }
+
 local table_of_toggles = {}
 
 

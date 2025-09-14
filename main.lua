@@ -32,7 +32,9 @@ local create_image = require("create_image")
 ---------------------------------------------
 -- GLOBAL VARIABLES
 ---------------------------------------------
-default_path = debug.getinfo(1, "S").source:match("@(.*\\)") .. "..\\"
+-- Default path is one level up from '_files'
+local script_path = debug.getinfo(1, "S").source:match("@(.*\\)")
+default_path = script_path:match("^(.*[\\/])[^\\/]+[\\/]$")
 -- local current_path = arg[0]:match("(.+[\\/])")
 config = require("settings")
 config.load_settings()
@@ -485,6 +487,43 @@ function shift_item(tbl, index, direction)
 	return target
 end
 
+function enable_preview(self, setting)
+	self.enterwindow_cb = function(self)
+		if setting.state == "ON" then
+			local img = iup.LoadImage(default_path .. "gfx\\" .. self.value)
+			if img then
+				local x_coordinate = iup.GetAttribute(self, "X")
+				local y_coordinate = iup.GetAttribute(self, "Y")
+				local size_string  = iup.GetAttribute(self, "RASTERSIZE")
+				local width, _     = size_string:match("(%d+)x(%d+)")
+
+				if img then
+					local label = iup.label{image = img}
+					preview_dialog = iup.dialog{
+						label,
+						border  = "NO",
+						maxbox  = "NO",
+						minbox  = "NO",
+						menubox = "NO",
+						resize  = "NO",
+						title   = nil,
+						-- background = "255 255 255",
+						parentdialog = iup.GetDialog(dlg),
+						startfocus = dlg
+					}
+					preview_dialog:showxy(x_coordinate + width + 70, y_coordinate - 5)
+				end
+			end
+		end
+	end
+
+	self.leavewindow_cb = function(self)
+		if preview_dialog then
+			preview_dialog:hide()
+		end
+	end
+end
+
 
 
 ---------------------------------------------
@@ -698,6 +737,13 @@ function build_gui()
 		spininc = "1",
 		rastersize = "55x"
 	}
+	text_file.show_preview = settings.show_preview_file.state
+	text_file_snow.show_preview = settings.show_preview_snow.state
+	text_ground.show_preview = settings.show_preview_ground.state
+
+	enable_preview(text_file, settings.show_preview_file)
+	enable_preview(text_file_snow, settings.show_preview_snow)
+	enable_preview(text_ground, settings.show_preview_ground)
 
 	-- File button and file dialog logic
 	local current_path = debug.getinfo(1, "S").source:match("@(.*\\)")
@@ -744,7 +790,7 @@ function build_gui()
 			local filename, extension = file_dlg.value:match("([^/\\]+)%.([^.\\/]+)$")
 			text_file_snow.value = filename .. "." .. extension
 			
-			local data = get_image_info(text_file.full_path)
+			local data = get_image_info(text_file_snow.full_path)
 			if data then
 				text_file_snow.bpp = data[3]
 			end

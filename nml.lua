@@ -141,6 +141,7 @@ function nml:generate_nml()
 
 	local used_grounds = {}
 	local used_classes = {}
+	local view_identifiers = { "a", "b", "c", "d" }
 
 	for i = 1, #table_of_objects do
 		-- Read object config values
@@ -167,11 +168,11 @@ function nml:generate_nml()
 		local spritelayouts = {}
 		local switch = {}
 
-		-- Setup bpp
+		-- Set bpp string based on 
 		local type_of_image = (bpp == "8") and "" or " ZOOM_LEVEL_NORMAL, BIT_DEPTH_32BPP,"
 		local type_of_image_snow = (bpp_snow == "8") and "" or " ZOOM_LEVEL_NORMAL, BIT_DEPTH_32BPP,"
 
-		-- Setup snow
+		-- Create a table for possible snow variants - will be looped through
 		local input_variants
 		if snow then
 			input_variants = {
@@ -182,7 +183,7 @@ function nml:generate_nml()
 			input_variants = { { "", type_of_image, filename } }
 		end
 
-		-- Set up ground
+		-- Set up ground - a string from a map if predefined ground sprite, else spriteset (put definition at the end of 'header')
 		local name_ground = ""
 		local GROUNDSPRITE = ""
 		if list_ground_value == "1" then
@@ -207,15 +208,13 @@ function nml:generate_nml()
 			used_grounds[filename_ground] = true
 		end
 
-		-- Calculate sprite parameters
+		-- Calculate sprite parameters - TODO better error handling, if dimensions don't match loaded image?
 		local sprite_width = Xdim * 32 + Ydim * 32
 		local padding = (number_of_views > 1) and (image_width - number_of_views * sprite_width) / (number_of_views - 1) or 0
 		local yoff = image_height - ((Ydim + Xdim) * 16) + 1
 
 
 		-- Choose nmlgen based on num of views, dimensions
-		local view_identifiers = { "a", "b", "c", "d" }
-
 		for i = 0, number_of_views - 1 do
 			local view_id = view_identifiers[i+1]
 
@@ -256,46 +255,6 @@ function nml:generate_nml()
 					"    relative_coord(%d, %d): spritelayout_%s_%s_%d_%d;",
 					0, 0, name, view_id, 0, 0
 				))
-
-			-- Objects 2 x 2
-			elseif X_dimension == 2 and Y_dimension == 2 then
-				for _, v in ipairs(input_variants) do
-					local string_snow, bpp, path = table.unpack(v)
-					table.insert(spritesets, string.format(self.spriteset_tmpl,
-						name, view_id, 0, 0, string_snow, bpp, path,
-						32+(sprite_width+padding)*i, 0, 64, image_height-47, -31, -(image_height-47-16)
-					))
-					table.insert(spritesets, string.format(self.spriteset_tmpl,
-						name, view_id, 1, 0, string_snow, bpp, path,
-						0+(sprite_width+padding)*i, 0, 32, image_height, -31, -(image_height-47)
-					))
-					table.insert(spritesets, string.format(self.spriteset_tmpl,
-						name, view_id, 0, 1, string_snow, bpp, path,
-						96+(sprite_width+padding)*i, 0, 32, image_height, 1, -(image_height-47)
-					))
-					table.insert(spritesets, string.format(self.spriteset_tmpl,
-						name, view_id, 1, 1, string_snow, bpp, path,
-						32+(sprite_width+padding)*i, image_height-47, 64, 47, -31, -(image_height-yoff-47)
-					))
-				end
-				for x = 0, X_dimension-1 do
-					for y = 0, Y_dimension-1 do
-						if snow then
-							table.insert(spritelayouts, string.format(self.layout_tmpl_snow,
-								name, view_id, x, y, GROUNDSPRITE, -x, -y,
-								name, view_id, x, y, name, view_id, x, y, -x, -y
-							))
-						else
-							table.insert(spritelayouts, string.format(self.layout_tmpl,
-								name, view_id, x, y, GROUNDSPRITE, name, view_id, x, y
-							))
-						end
-						table.insert(switch, string.format(
-							"    relative_coord(%d, %d): spritelayout_%s_%s_%d_%d;",
-							x, y, name, view_id, x, y
-						))
-					end
-				end
 
 			-- Objects 1 x N
 			elseif X_dimension == 1 then
