@@ -33,18 +33,18 @@ settings = {
 
 	show_preview_file = {
 		index = 1,
-		state = "ON",
-		label = "  Show preview when hovering over file",
+		state = "OFF",
+		label = '  Show "File" preview on hover',
 	},
 	show_preview_snow = {
 		index = 2,
-		state = "ON",
-		label = "  Show preview when hovering over snow file",
+		state = "OFF",
+		label = '  Show "Snow" preview on hover',
 	},
 	show_preview_ground = {
 		index = 3,
-		state = "ON",
-		label = "  Show preview when hovering over ground file",
+		state = "OFF",
+		label = '  Show "Ground" preview on hover',
 	},
 	toggle_last_used_folder = {
 		index = 4,

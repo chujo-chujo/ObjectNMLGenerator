@@ -68,6 +68,9 @@ table_with_header = {}
 -- 	}
 -- }
 
+preview_dialog = nil
+preview_label = nil
+
 
 
 ---------------------------------------------
@@ -487,33 +490,51 @@ function shift_item(tbl, index, direction)
 	return target
 end
 
-function enable_preview(self, setting)
-	self.enterwindow_cb = function(self)
-		if setting.state == "ON" then
-			local img = iup.LoadImage(default_path .. "gfx\\" .. self.value)
-			if img then
-				local x_coordinate = iup.GetAttribute(self, "X")
-				local y_coordinate = iup.GetAttribute(self, "Y")
-				local size_string  = iup.GetAttribute(self, "RASTERSIZE")
-				local width, _     = size_string:match("(%d+)x(%d+)")
+function enable_preview(self, text_widget, setting)
+	function display_preview(self, text_widget)
+		local img = nil
 
-				if img then
-					local label = iup.label{image = img}
-					preview_dialog = iup.dialog{
-						label,
-						border  = "NO",
-						maxbox  = "NO",
-						minbox  = "NO",
-						menubox = "NO",
-						resize  = "NO",
-						title   = nil,
-						-- background = "255 255 255",
-						parentdialog = iup.GetDialog(dlg),
-						startfocus = dlg
-					}
-					preview_dialog:showxy(x_coordinate + width + 70, y_coordinate - 5)
+		if text_widget.value then
+			img = iup.LoadImage(default_path .. "gfx\\" .. text_widget.value)
+		else
+			return
+		end
+		if img then
+			local x_coordinate = iup.GetAttribute(self, "X")
+			local y_coordinate = iup.GetAttribute(self, "Y")
+			local width, _ = string.match(iup.GetAttribute(self, "RASTERSIZE"), "(%d+)x(%d+)")
+
+			preview_label = iup.label{image = img}
+			preview_dialog = iup.dialog{
+				preview_label,
+				border  = "NO",
+				maxbox  = "NO",
+				minbox  = "NO",
+				menubox = "NO",
+				resize  = "NO",
+				title   = nil,
+				parentdialog = iup.GetDialog(dlg),
+				startfocus = dlg,
+			}
+			preview_dialog:showxy(x_coordinate + width + 70, y_coordinate - 5)
+		end
+	end
+
+	self.button_cb = function(self, button, pressed, x, y, status)
+		if (button == iup.BUTTON1 or button == iup.BUTTON3) and setting.state == "OFF" then
+			if pressed == 1 then
+				display_preview(self, text_widget)
+			else
+				if preview_dialog then
+					preview_dialog:hide()
 				end
 			end
+		end
+	end
+
+	self.enterwindow_cb = function(self)
+		if setting.state == "ON" then
+			display_preview(self, text_widget)
 		end
 	end
 
@@ -530,135 +551,48 @@ end
 -- GUI SETUP
 ---------------------------------------------
 function build_gui()
-	local img_favicon    = iup.LoadImage("gui/icon(48x48).png")
-	local img_icon_new   = iup.LoadImage("gui/icon_new.png")
-	local img_icon_open  = iup.LoadImage("gui/icon_open.png")
-	local img_icon_save  = iup.LoadImage("gui/icon_save.png")
-	local img_icon_up    = iup.LoadImage("gui/icon_up.png")
-	local img_icon_down  = iup.LoadImage("gui/icon_down.png")
-	local img_icon_plus  = iup.LoadImage("gui/icon_plus.png")
-	local img_icon_minus = iup.LoadImage("gui/icon_minus.png")
-	local img_icon_NML   = iup.LoadImage("gui/icon_generate.png")
-	local img_icon_help  = iup.LoadImage("gui/icon_help.png")
-	local img_icon_settings = iup.LoadImage("gui/icon_settings.png")
+	-------------------------------------------------------
+	-- ICONS
 
+	img_favicon    = iup.LoadImage("gui/icon(48x48).png")
+	img_icon_new   = iup.LoadImage("gui/icon_new.png")
+	img_icon_open  = iup.LoadImage("gui/icon_open.png")
+	img_icon_save  = iup.LoadImage("gui/icon_save.png")
+	img_icon_up    = iup.LoadImage("gui/icon_up.png")
+	img_icon_down  = iup.LoadImage("gui/icon_down.png")
+	img_icon_plus  = iup.LoadImage("gui/icon_plus.png")
+	img_icon_minus = iup.LoadImage("gui/icon_minus.png")
+	img_icon_NML   = iup.LoadImage("gui/icon_generate.png")
+	img_icon_help  = iup.LoadImage("gui/icon_help.png")
+	img_preview    = iup.LoadImage("gui/eye_small2.png")
+	img_icon_settings = iup.LoadImage("gui/icon_settings.png")
+
+
+
+	-------------------------------------------------------
 	-- TOOLBAR
-	local btn_new  = iup.button{
-		image = img_icon_new,
-		flat = "Yes",
-		action = function() new_list() return iup.DEFAULT end,
-		canfocus="No",
-		tip = "New list (Ctrl+N)"}
-	local btn_open = iup.button{
-		image = img_icon_open,
-		flat = "Yes",
-		action = function() open_file() return iup.DEFAULT end,
-		canfocus="No",
-		tip = "Open list (Ctrl+O)"}
-	local btn_save = iup.button{
-		image = img_icon_save,
-		flat = "Yes",
-		action = function() save_list() return iup.DEFAULT end,
-		canfocus="No",
-		tip = "Save list as (Ctrl+S)"}
-	local btn_settings = iup.button{
-		image = img_icon_settings,
-		flat = "Yes",
-		action = function() show_settings() return iup.DEFAULT end,
-		canfocus="No",
-		tip = "Settings (Ctrl+K)"}
-	local btn_help = iup.button{
-		image = img_icon_help,
-		flat = "Yes",
-		action = function() show_help() return iup.DEFAULT end,
-		canfocus="No",
-		tip = "Manual (Ctrl+H, F1)"}
 
-	hbox_toolbar = iup.hbox{
-		btn_new,
-		btn_open,
-		btn_save,
-		iup.label{separator="VERTICAL"},
-		btn_settings,
-		iup.fill{},
-		btn_help,
-		margin = "5x5",
-		gap = 2,
-	}
+	require("toolbar")
 
-	-- GRF BLOCK FRAME
-	text_grfid = iup.text{
-		mask = "[A-Z0-9\\]+",
-		NC = 8,
-		expand = "HORIZONTAL",
-		tip = "Four-byte string\n(can use escaped bytes)"
-	}
-	text_version = iup.text{
-		mask = "/d+",
-		value = "0",
-		spin = "YES",
-		spinmin = "0",
-		spininc = "1",
-		expand = "HORIZONTAL"
-	}
-	text_min_comp_version = iup.text{
-		mask = "/d+",
-		value = "0",
-		spin = "YES",
-		spinmin = "0",
-		spininc = "1",
-		expand = "HORIZONTAL"
-	}
-	text_grf_name = iup.text{rastersize = "190x0"}
-	text_grf_url = iup.text{expand = "HORIZONTAL"}
-	text_grf_desc = iup.text{rastersize = "x55", multiline = "YES", wordwrap = "YES", expand = "HORIZONTAL"}
 
-	local vbox_grf_block = 
-		iup.frame{
-			iup.vbox{
-				iup.hbox{
-					iup.label{title = "Grf ID:", tip = "Four-byte string\n(can use escaped bytes)"},
-					text_grfid,
-					iup.fill{expand = "HORIZONTAL"},
-					iup.label{title = "Version:"},
-					text_version,
-					iup.fill{expand = "HORIZONTAL"},
-					iup.label{title = "Min. comp. version:"},
-					text_min_comp_version,
-					gap = "10"
-				},
-				iup.hbox{
-					iup.label{title = "NewGRF name:"},
-					text_grf_name,
-					iup.label{title = "NewGRF url:"},
-					text_grf_url,
-					gap = "10"
-				},
-				iup.hbox{
-					iup.label{title = "NewGRF description:"},
-					text_grf_desc,
-					gap = "10"
-				}
-			},
-			title = "GRF block",
-			margin = "5x5"
-		}
 
+	-------------------------------------------------------
+	-- GRF BLOCK
+
+	require("header")
+
+
+
+	-------------------------------------------------------
 	-- LIST OF OBJECTS
-	list_objects = iup.list{
-		dropdown = "NO",
-		editbox = "NO",
-		rastersize = "180x200",
-		expand = "YES",
-		action = function(self, text, index) update_object_properties_widgets(index) return iup.DEFAULT end,
-	}
-	-- function list_objects:k_any(key)
-	-- 	if key == iup.K_DEL then
-	-- 		btn_remove.action()
-	-- 	end
-	-- end
 
+	require("list")
+	
+
+
+	-------------------------------------------------------
 	-- OBJECT PROPERTIES
+
 	-- List of ground tiles
 	local ground = {
 		"Custom...",
@@ -737,13 +671,13 @@ function build_gui()
 		spininc = "1",
 		rastersize = "55x"
 	}
-	text_file.show_preview = settings.show_preview_file.state
-	text_file_snow.show_preview = settings.show_preview_snow.state
-	text_ground.show_preview = settings.show_preview_ground.state
 
-	enable_preview(text_file, settings.show_preview_file)
-	enable_preview(text_file_snow, settings.show_preview_snow)
-	enable_preview(text_ground, settings.show_preview_ground)
+	local label_preview_file = iup.label{image = img_preview}
+	local label_preview_snow = iup.label{image = img_preview}
+	local label_preview_ground = iup.label{image = img_preview}
+	enable_preview(label_preview_file, text_file, settings.show_preview_file)
+	enable_preview(label_preview_snow, text_file_snow, settings.show_preview_snow)
+	enable_preview(label_preview_ground, text_ground, settings.show_preview_ground)
 
 	-- File button and file dialog logic
 	local current_path = debug.getinfo(1, "S").source:match("@(.*\\)")
@@ -919,96 +853,44 @@ function build_gui()
 		return iup.DEFAULT
 	end
 
-	local vbox_properties =
+	local frame_properties = iup.frame{
 		iup.vbox{
-			iup.hbox{iup.label{title="File:", rastersize="80x"}, text_file, btn_file},
-			iup.hbox{iup.label{title="W - H - bpp:", rastersize="80x"}, text_width, iup.label{title="  -  "}, text_height, iup.label{title="  -  "}, text_bpp},
-			iup.hbox{toggle_snow, text_file_snow, btn_file_snow},
-			iup.hbox{iup.label{title="Ground:", rastersize="80x"}, list_ground, text_ground, btn_ground},
-			iup.hbox{iup.label{title="Name:", rastersize="80x"}, text_name},
-			iup.hbox{iup.label{title="Dimensions:", rastersize="80x"}, text_X_dimension, iup.label{title="    x    "}, text_Y_dimension},
-			iup.hbox{iup.label{title="Views:", rastersize="80x"}, rad_views},
-			iup.hbox{iup.label{title="Class:", rastersize="80x", tip = "String of 4 characters\n(allowed characters are A-Z, 0-9)"}, text_class},
-			iup.hbox{iup.label{title="Classname:", rastersize="80x"}, text_classname},
+			iup.hbox{iup.label{title="File:", rastersize="80x"}, text_file, label_preview_file, btn_file, alignment="ACENTER"},
+			iup.hbox{iup.label{title="W - H - bpp:", rastersize="80x"}, text_width, iup.label{title="  -  "}, text_height, iup.label{title="  -  "}, text_bpp, alignment="ACENTER"},
+			iup.hbox{toggle_snow, text_file_snow, label_preview_snow, btn_file_snow, alignment="ACENTER"},
+			iup.hbox{iup.label{title="Ground:", rastersize="80x"}, list_ground, text_ground, label_preview_ground, btn_ground, alignment="ACENTER"},
+			iup.hbox{iup.label{title="Name:", rastersize="80x"}, text_name, alignment="ACENTER"},
+			iup.hbox{iup.label{title="Dimensions:", rastersize="80x"}, text_X_dimension, iup.label{title="    x    "}, text_Y_dimension, alignment="ACENTER"},
+			iup.hbox{iup.label{title="Views:", rastersize="80x"}, rad_views, alignment="ACENTER"},
+			iup.hbox{iup.label{title="Class:", rastersize="80x", tip="String of 4 characters\n(allowed characters are A-Z, 0-9)"}, text_class, alignment="ACENTER"},
+			iup.hbox{iup.label{title="Classname:", rastersize="80x"}, text_classname, alignment="ACENTER"},
 			iup.hbox{btn_add_object},
-			iup.hbox{iup.label{separator = "HORIZONTAL", expand = "HORIZONTAL"}},
-			iup.hbox{btn_generate, iup.fill{rastersize = "5x"}, text_nml_centered},
-		}
-
-	local btn_shift_up = iup.button{
-		image = img_icon_up,
-		rastersize = "x35",
-		expand = "HORIZONTAL",
-		action = function()
-			local new_index = shift_item(table_of_objects, tonumber(list_objects.value), "up")
-			update_object_list()
-			if new_index then list_objects.value = new_index end
-		end
-	}
-
-	local btn_shift_down = iup.button{
-		image = img_icon_down,
-		rastersize = "x35",
-		expand = "HORIZONTAL",
-		action = function()
-			local new_index = shift_item(table_of_objects, tonumber(list_objects.value), "down")
-			update_object_list()
-			if new_index then list_objects.value = new_index end
-		end
-	}
-
-	btn_remove = iup.button{
-		title=" Remove object",
-		image = img_icon_minus,
-		rastersize = "x35",
-		expand = "HORIZONTAL"
-	}
-	function btn_remove.action()
-		if settings.ask_remove_object.state == "ON" then
-			local response = iup.Alarm(
-				"Remove object", 
-				"Are you sure?", 
-				"Yes", "Cancel", nil)
-			if response ~= 1 then
-				return iup.DEFAULT
-			end
-		end
-		
-		remove_from_table_of_objects()
-		reset_widgets.properties()
-		return iup.DEFAULT
-	end
-
-	local frame_list = iup.frame{
-		iup.vbox{
-			list_objects,
-			iup.hbox{
-				btn_shift_up,
-				btn_shift_down,
-				margin = "0x0",
-				gap = "5"
-			},
-			btn_remove,
-			expand = "YES"
+			iup.hbox{iup.label{separator="HORIZONTAL", expand="HORIZONTAL"}},
+			iup.hbox{btn_generate, iup.fill{rastersize="5x"}, text_nml_centered},
 		},
-		title = "List of objects",
-		margin = "10x10",
-		expand = "YES"
+		title = "Object properties",
+		margin = "6x4",
+		gap = "0"
 	}
 
-	local hbox_objects = iup.hbox{
+
+
+
+
+
+	hbox_objects = iup.hbox{
 		frame_list,
-		iup.frame{
-			vbox_properties,
-			title = "Object properties",
-			margin = "6x4",
-			gap = "0"
-		},
+		frame_properties,
 		margin = "0x10",
 		gap = "5"
 	}
 
-	-- MAIN FRAME (root of dlg)
+
+
+	-------------------------------------------------------
+	-- MAIN DIALOG WINDOW
+	
+	-- root frame of dlg
 	vbox_main_frame = iup.vbox{
 		hbox_toolbar,
 		vbox_grf_block,

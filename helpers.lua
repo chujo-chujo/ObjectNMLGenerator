@@ -18,6 +18,7 @@ Functions included:
 - startswith(str, prefix[, start_index]): Check if a string begins with a specified prefix (optional starting index).
 - str_to_bool(str): Convert boolean-like strings into proper boolean values.
 - contains_any(tbl, values): Check a table for membership of any item from a list.
+- enumerate(table): Returns a pair of variables 'index', 'table[index]' (similar to Python)
 ]]
 
 local helpers = {}
@@ -180,6 +181,18 @@ function helpers.contains_any(tbl, values)
         end
     end
     return false
+end
+
+-- Mimics Python's enumerate: adds a counter to an array-like table,
+-- doesn't stop at 'nil' and returns two vars: 'index', 'table[index]'
+function helpers.enumerate(table)
+    local i = 0
+    return function()
+        i = i + 1
+        if i <= #table then
+            return i, table[i]
+        end
+    end
 end
 
 
