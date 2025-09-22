@@ -212,6 +212,7 @@ function nml:generate_nml()
 		local sprite_width = Xdim * 32 + Ydim * 32
 		local padding = (number_of_views > 1) and (image_width - number_of_views * sprite_width) / (number_of_views - 1) or 0
 		local yoff = image_height - ((Ydim + Xdim) * 16) + 1
+		local menu_offset = (number_of_views == 4) and (-yoff - 16) or -yoff
 
 
 		-- Choose nmlgen based on num of views, dimensions
@@ -269,7 +270,7 @@ function nml:generate_nml()
 							if x == 0 and y == 0 then
 								table.insert(spritesets, string.format(self.spriteset_tmpl,
 									name, view_id, x, y, string_snow, bpp, path,
-									imgx+(sprite_width+padding)*i, 0, 666, height, -31, -(height-31)
+									imgx+(sprite_width+padding)*i, 0, 32, height, -31, -(height-31)
 								))
 							elseif y == Y_dimension-1 and x == 0 then
 								table.insert(spritesets, string.format(self.spriteset_tmpl,
@@ -286,8 +287,8 @@ function nml:generate_nml()
 
 						if snow then
 							table.insert(spritelayouts, string.format(self.layout_tmpl_snow,
-								name, view_id, x, y, GROUNDSPRITE, -x, -y,
-								name, view_id, x, y, name, view_id, x, y, -x, -y
+								name, view_id, x, y, GROUNDSPRITE, math.max(-8, -x), math.max(-8, -y),
+								name, view_id, x, y, name, view_id, x, y, math.max(-8, -x), math.max(-8, -y)
 							))
 						else
 							table.insert(spritelayouts, string.format(self.layout_tmpl,
@@ -331,8 +332,8 @@ function nml:generate_nml()
 
 						if snow then
 							table.insert(spritelayouts, string.format(self.layout_tmpl_snow,
-								name, view_id, x, y, GROUNDSPRITE, -x, -y,
-								name, view_id, x, y, name, view_id, x, y, -x, -y
+								name, view_id, x, y, GROUNDSPRITE, math.max(-8, -x), math.max(-8, -y),
+								name, view_id, x, y, name, view_id, x, y, math.max(-8, -x), math.max(-8, -y)
 							))
 						else
 							table.insert(spritelayouts, string.format(self.layout_tmpl,
@@ -450,8 +451,8 @@ function nml:generate_nml()
 
 						if snow then
 							table.insert(spritelayouts, string.format(self.layout_tmpl_snow,
-								name, view_id, x, y, GROUNDSPRITE, -x, -y,
-								name, view_id, x, y, name, view_id, x, y, -x, -y
+								name, view_id, x, y, GROUNDSPRITE, math.max(-8, -x), math.max(-8, -y),
+								name, view_id, x, y, name, view_id, x, y, math.max(-8, -x), math.max(-8, -y)
 							))
 						else
 							table.insert(spritelayouts, string.format(self.layout_tmpl,
@@ -471,7 +472,7 @@ function nml:generate_nml()
 				"spriteset(spriteset_%s_%s_menu,%s \"gfx/%s\") {[ %d, %d, %d, %d, %d, %d ]}",
 				name, view_id, type_of_image, filename,
 				0+(sprite_width+padding)*i, 0, sprite_width, image_height,
-				-sprite_width//2, -(image_height//2)
+				-sprite_width//2, menu_offset
 			))
 			table.insert(spritelayouts, string.format(
 				"spritelayout spritelayout_%s_%s_menu { ground { sprite: spriteset_empty; } building { sprite: spriteset_%s_%s_menu; } }",
