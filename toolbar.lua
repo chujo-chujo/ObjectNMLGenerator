@@ -29,6 +29,7 @@ local btn_help = iup.button{
 	canfocus = "NO",
 	tip = "Manual (Ctrl+H, F1)"}
 
+
 hbox_toolbar = iup.hbox{
 	btn_new,
 	btn_open,

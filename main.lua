@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.0.0 (2025-09-10)
+ObjectNMLGenerator, v1.1.0 (2025-09-26)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -8,6 +8,11 @@ Any modifications or derivative works must be licensed under the same terms.
 
 This Lua module defines and initializes UI components such as buttons, labels, etc.,
 and includes functions that interact with the main application logic.
+
+The code is divided into separate files to improve readability:
+- toolbar.lua
+- header.lua
+- list.lua
 
 Additional functionality is modularized in:
 - nml.lua
@@ -22,7 +27,7 @@ require("iupluacontrols")
 require("iupluaim")
 local im = require("imlua")
 
-local nml = require("nml")
+nml = require("nml")
 helpers = require("helpers")
 local yaml = require("chuyaml")
 local create_image = require("create_image")
@@ -78,10 +83,11 @@ preview_label = nil
 ---------------------------------------------
 function close_app()
 	if settings.ask_exit.state == "ON" then
-		local response = iup.Alarm(
-			"Exit", 
-			"Are you sure you want to exit?", 
-			"Yes", "Cancel", nil)
+		local response = show_message(
+			"QUESTION",
+			"", 
+			"  Are you sure you want to exit?", 
+			"OKCANCEL")
 		if response == 1 then
 			config.save_settings()
 			return true
@@ -201,7 +207,7 @@ end
 
 function new_list()
 	if settings.ask_reset.state == "ON" then
-		local response = iup.Alarm("Are you sure?", "This will reset all fields.\nDo you want to continue?", "Yes", "Cancel", nil)
+		local response = show_message("QUESTION", "Are you sure?", "  This will reset all fields.\n  Do you want to continue?", "OKCANCEL")
 		if response == 1 then
 			reset_widgets.ALL()
 		end
@@ -212,7 +218,7 @@ end
 
 function open_file(filepath)
 	if settings.ask_open.state == "ON" and #table_of_objects ~= 0 then
-		local response = iup.Alarm("Are you sure?", "Opening a list will cause the loss of current data.\nDo you want to continue?", "Yes", "Cancel", nil)
+		local response = show_message("QUESTION", "Are you sure?", "  Opening a list will cause the loss of current data.\n  Do you want to continue?", "OKCANCEL")
 		if response ~= 1 then
 			return iup.DEFAULT
 		end
@@ -240,12 +246,12 @@ function open_file(filepath)
 	-- Load data as a multiline string
 	local yaml_file, err = io.open(filepath, "r")
 	if not yaml_file then
-		iup.Message("Error", "Could not open file: " .. filepath .. "\nError: " .. err .. "\n")
+		show_message("ERROR", "Error", "  Could not open file: " .. filepath .. "\n  Error: " .. err, "OK")
 		return
 	end
 
 	reset_widgets.ALL()
-	local config_string = yaml_file:read("*a")
+	local config_string = yaml_file:read("*all")
 	yaml_file:close()
 	table_of_objects = yaml.parse(config_string)
 	table_with_header["header"] = table_of_objects["header"]
@@ -299,8 +305,7 @@ end
 function update_table_with_header()
 	if helpers.trim(text_grf_url.value) ~= "" then
 		if not helpers.startswith(text_grf_url.value, "https://") and not helpers.startswith(text_grf_url.value, "http://")  then
-			-- iup.Message("Warning", "'NewGRF url' has to start with 'https://' or 'http://'!")
-			iup.Message("Invalid URL", '"NewGRF url" has to start with "https://" or "http://"!')
+			show_message("WARNING", "Invalid URL", '  "NewGRF url" has to start with "https://" or "http://"!', "OK")
 			return false
 		end
 	end
@@ -320,7 +325,7 @@ end
 function get_image_info(filepath)
 	local image = im.FileImageLoad(filepath, im.IM_UNKNOWN)
 	if not image then
-		iup.Message("Error", "Failed to load image:\n" .. filepath)
+		show_message("ERROR", "Error", "  Failed to load image:\n" .. filepath, "OK")
 		return nil
 	end
 
@@ -332,10 +337,10 @@ function get_image_info(filepath)
 	if color_space == im.MAP then
 		bpp = "8"
 	elseif color_space == im.RGB and not image:HasAlpha() then
-		iup.Message("Check image color mode", filepath .. "\n is not indexed or is missing alpha channel.")
+		show_message("WARNING", "Check image color mode", filepath .. "\n is not indexed or is missing the alpha channel.", "OK")
 		return {image_width, image_height, bpp}
 	elseif color_space ~= im.RGB and color_space ~= im.MAP then
-		iup.Message("Check image color mode", "Sprites can be only RGBA or Indexed.")
+		show_message("WARNING", "Check image color mode", "Sprites can be only RGBA or Indexed.", "OK")
 		return {image_width, image_height, bpp}
 	end
 
@@ -344,7 +349,7 @@ end
 
 function add_to_table_of_objects()
 	if check_empty_obj_properties() then
-		iup.Message("Empty field", "All fields of the object's properties must be filled in.")
+		show_message("WARNING", "", "  All fields of the object's properties must be filled in.", "OK")
 		return
 	end
 
@@ -383,9 +388,9 @@ function add_to_table_of_objects()
 	if found then
 		local response = nil
 		if settings.ask_overwrite_object.state ==  "ON" then
-			response = iup.Alarm("Existing Object", 
-				"'" .. filename .. "' is already assigned to an object.\nDo you want to overwrite the object?", 
-				"Yes", "Cancel", nil)
+			response = show_message("QUESTION", "Existing Object", 
+				"  '" .. filename .. "' is already assigned to an object.\n  Do you want to overwrite the object?", 
+				"OKCANCEL")
 		else
 			response = 1
 		end
@@ -438,19 +443,27 @@ function check_empty_header()
 end
 
 function show_help()
-	-- local url = "https://github.com/chujo-chujo/ObjectNMLGenerator"
-	local url = default_path .. "/Manual.html"
-    -- Windows
-    if package.config:sub(1,1) == "\\" then
-        os.execute('start "" "' .. url .. '"')
-    -- macOS
-    elseif io.popen("uname"):read("*l") == "Darwin" then
-        os.execute('open "' .. url .. '"')
-    -- Linux / BSD
-    else
-        os.execute('xdg-open "' .. url .. '"')
-    end
-    return iup.DEFAULT
+	local url = default_path .. "Manual.html"
+	if not helpers.file_exists(url) then
+		local response = show_message("QUESTION", "Help", "  The manual could not be found locally.\n  Would you like to open the online version?", "OKCANCEL")
+		if response == 1 then
+			url = "https://chujo-chujo.github.io/ObjectNMLGenerator/"
+		else
+			return iup.DEFAULT
+		end
+	end
+
+	-- Windows
+	if package.config:sub(1,1) == "\\" then
+		os.execute('start "" "' .. url .. '"')
+	-- macOS
+	elseif io.popen("uname"):read("*l") == "Darwin" then
+		os.execute('open "' .. url .. '"')
+	-- Linux / BSD
+	else
+		os.execute('xdg-open "' .. url .. '"')
+	end
+	return iup.DEFAULT
 end
 
 function show_settings()
@@ -545,6 +558,19 @@ function enable_preview(self, text_widget, setting)
 	end
 end
 
+function show_message(type, title, text, buttons)
+	-- Wrapper function to display "iup.messagedlg"
+	-- returns the number (as type NUMBER 1, 2 or 3) of the pressed button
+	local msg = iup.messagedlg{
+		dialogtype = type,
+		title = title,
+		value = text,
+		buttons = buttons
+	}
+	msg:popup(iup.ANYWHERE, iup.ANYWHERE)
+	return tonumber(msg.buttonresponse)
+end
+
 
 
 ---------------------------------------------
@@ -555,6 +581,7 @@ function build_gui()
 	-- ICONS
 
 	img_favicon    = iup.LoadImage("gui/icon(48x48).png")
+	img_nmlc       = iup.LoadImage("gui/nmlc.exe.png")
 	img_icon_new   = iup.LoadImage("gui/icon_new.png")
 	img_icon_open  = iup.LoadImage("gui/icon_open.png")
 	img_icon_save  = iup.LoadImage("gui/icon_save.png")
@@ -562,9 +589,12 @@ function build_gui()
 	img_icon_down  = iup.LoadImage("gui/icon_down.png")
 	img_icon_plus  = iup.LoadImage("gui/icon_plus.png")
 	img_icon_minus = iup.LoadImage("gui/icon_minus.png")
-	img_icon_NML   = iup.LoadImage("gui/icon_generate.png")
+	img_icon_NML   = iup.LoadImage("gui/icon_generate2.png")
+	img_icon_NML_3 = iup.LoadImage("gui/icon_generate3.png")
 	img_icon_help  = iup.LoadImage("gui/icon_help.png")
 	img_preview    = iup.LoadImage("gui/eye_small2.png")
+	img_icon_close = iup.LoadImage("gui/close.png")
+	img_icon_compile  = iup.LoadImage("gui/icon_compile2.png")
 	img_icon_settings = iup.LoadImage("gui/icon_settings.png")
 
 
@@ -760,93 +790,20 @@ function build_gui()
 			text_file_snow.active = "YES"
 			btn_file_snow.active = "YES"
 		else
+			text_file_snow.value = ""
 			text_file_snow.active = "NO"
 			btn_file_snow.active = "NO"
 		end
 	end
 
-	-- 'Generate' button + input field
-	local btn_generate = iup.button{
-		title = " Generate NML: ",
-		image = img_icon_NML,
-		rastersize = "60x35",
-		expand = "HORIZONTAL"
-	}
-	function btn_generate.action()
-		if helpers.trim(text_nml.value) == "" then
-			return iup.DEFAULT
-		end
-
-		if check_empty_header() then return iup.DEFAULT end
-		local status = update_table_with_header()
-		if not status then
-			return iup.DEFAULT
-		end
-
-		if settings.ask_overwrite_nml.state == "ON" then
-			if helpers.file_exists("../" .. text_nml.value) then
-				local response = iup.Alarm(
-					"Warning", 'File "' .. text_nml.value ..'" already exists.\nDo you want to overwrite it?', "Yes", "Cancel", nil)
-				if response == 2 then
-					return iup.DEFAULT
-				end
-			end
-		end
-
-		-- Check if the "gfx" folder exists
-		if not helpers.dir_exists("../gfx") then
-		    helpers.make_dir("../gfx")
-		    iup.Message("Warning",
-				"Couldn't find the GFX folder.\n\n" .. 
-				"All used sprites have to be in the GFX folder next to the .NML file\n" ..
-				"and the LANG folder to be succesfully compiled.")
-		end
-
-		local NML, LANG = nml:generate_nml()
-
-		local ok, err = pcall(nml.write_NML_to_file, text_nml.value, NML, LANG)
-		if not ok then
-			iup.Message("Error", "Export canceled.\nERROR:\n" .. err)
-			return iup.DEFAULT
-		else
-			if not helpers.file_exists("../gfx/ground.png") then
-				local im_image = create_image.ground_png()
-				im.FileImageSave("../gfx/ground.png", "PNG", im_image)
-			end
-			if not helpers.file_exists("../gfx/empty_pixel.png") then
-				local im_image = create_image.empty_png()
-				im.FileImageSave("../gfx/empty_pixel.png", "PNG", im_image)
-			end
-			iup.Message("Success", "Export successful!")
-		end
-
-		if settings.toggle_last_export_filename.state == "ON" then
-			settings.last_export_filename = text_nml.value
-		end
-
-		return iup.DEFAULT
-	end
-	text_nml = iup.text{
-		rastersize = "x25",
-		value = settings.last_export_filename,
-		expand = "HORIZONTAL"
-	}
-	local text_nml_centered = iup.vbox{
-		iup.fill{},
-		text_nml,
-		iup.fill{},
-		expand = "YES",
-		margin = "0x0"
-	}
-	iup.SetAttribute(btn_generate, "FONTSTYLE", "Bold")
 
 	local btn_add_object = iup.button{
 		title=" Add object     ",
 		image = img_icon_plus,
 		rastersize = "x35",
-		expand = "HORIZONTAL",
-		fontstyle = "BOLD"
+		expand = "HORIZONTAL"
 	}
+	iup.SetAttribute(btn_add_object, "FONTSTYLE", "Bold")
 	function btn_add_object.action()
 		add_to_table_of_objects()
 		update_object_list()
@@ -855,54 +812,115 @@ function build_gui()
 
 	local frame_properties = iup.frame{
 		iup.vbox{
-			iup.hbox{iup.label{title="File:", rastersize="80x"}, text_file, label_preview_file, btn_file, alignment="ACENTER"},
-			iup.hbox{iup.label{title="W - H - bpp:", rastersize="80x"}, text_width, iup.label{title="  -  "}, text_height, iup.label{title="  -  "}, text_bpp, alignment="ACENTER"},
-			iup.hbox{toggle_snow, text_file_snow, label_preview_snow, btn_file_snow, alignment="ACENTER"},
-			iup.hbox{iup.label{title="Ground:", rastersize="80x"}, list_ground, text_ground, label_preview_ground, btn_ground, alignment="ACENTER"},
-			iup.hbox{iup.label{title="Name:", rastersize="80x"}, text_name, alignment="ACENTER"},
-			iup.hbox{iup.label{title="Dimensions:", rastersize="80x"}, text_X_dimension, iup.label{title="    x    "}, text_Y_dimension, alignment="ACENTER"},
-			iup.hbox{iup.label{title="Views:", rastersize="80x"}, rad_views, alignment="ACENTER"},
-			iup.hbox{iup.label{title="Class:", rastersize="80x", tip="String of 4 characters\n(allowed characters are A-Z, 0-9)"}, text_class, alignment="ACENTER"},
-			iup.hbox{iup.label{title="Classname:", rastersize="80x"}, text_classname, alignment="ACENTER"},
+			iup.hbox{
+				iup.label{title="File:", rastersize="80x"},
+				text_file,
+				label_preview_file,
+				btn_file,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				iup.label{title="W - H - bpp:", rastersize="80x"},
+				text_width,
+				iup.label{title="  -  "},
+				text_height, iup.label{title="  -  "},
+				text_bpp,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				toggle_snow,
+				text_file_snow,
+				label_preview_snow,
+				btn_file_snow,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				iup.label{title="Ground:", rastersize="80x"},
+				list_ground,
+				text_ground,
+				label_preview_ground,
+				btn_ground,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				iup.label{title="Name:", rastersize="80x"},
+				text_name,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				iup.label{title="Dimensions:", rastersize="80x"},
+				text_X_dimension, iup.label{title="    x    "},
+				text_Y_dimension,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				iup.label{title="Views:", rastersize="80x"},
+				rad_views,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				iup.label{title="Class:", rastersize="80x", tip="String of 4 characters\n(allowed characters are A-Z, 0-9)"},
+				text_class,
+				alignment="ACENTER"
+			},
+			iup.fill{},
+			iup.hbox{
+				iup.label{title="Classname:", rastersize="80x"},
+				text_classname,
+				alignment="ACENTER"
+			},
 			iup.hbox{btn_add_object},
-			iup.hbox{iup.label{separator="HORIZONTAL", expand="HORIZONTAL"}},
-			iup.hbox{btn_generate, iup.fill{rastersize="5x"}, text_nml_centered},
+			expand = "YES",
+			gap = "0",
 		},
-		title = "Object properties",
+		title = " Object properties ",
 		margin = "6x4",
-		gap = "0"
+		-- gap = "0",
+		expand = "YES",
 	}
-
-
-
-
-
 
 	hbox_objects = iup.hbox{
 		frame_list,
 		frame_properties,
 		margin = "0x10",
-		gap = "5"
+		gap = "10",
+		expand = "YES"
 	}
 
+
+
+	-------------------------------------------------------
+	-- GENERATE
+
+	require("generate")
+	
 
 
 	-------------------------------------------------------
 	-- MAIN DIALOG WINDOW
 	
 	-- root frame of dlg
-	vbox_main_frame = iup.vbox{
+	vbox_main = iup.vbox{
 		hbox_toolbar,
 		vbox_grf_block,
 		hbox_objects,
-		margin = "10x0"
+		hbox_generate,
+		iup.fill{rastersize = "x10"},
+		nmargin = "10x0",
 	}
 
 	dlg = iup.dialog{
-		vbox_main_frame,
+		vbox_main,
 		title = "Object NML for Those Who'd Rather Not",
-		rastersize = "660x658",
-		resize = "NO",
+		rastersize = "720x694",
+		resize = "YES",
 		maxbox = "NO",
 		icon = img_favicon,
 		dropfilestarget = "YES",

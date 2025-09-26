@@ -5,11 +5,11 @@ list_objects = iup.list{
 	expand = "YES",
 	action = function(self, text, index) update_object_properties_widgets(index) return iup.DEFAULT end,
 }
--- function list_objects:k_any(key)
--- 	if key == iup.K_DEL then
--- 		btn_remove.action()
--- 	end
--- end
+function list_objects:k_any(key)
+	if key == iup.K_DEL and settings.ask_remove_object.state == "ON" then
+		btn_remove.action()
+	end
+end
 
 local btn_shift_up = iup.button{
 	image = img_icon_up,
@@ -33,7 +33,7 @@ local btn_shift_down = iup.button{
 	end
 }
 
-local btn_remove = iup.button{
+btn_remove = iup.button{
 	title=" Remove object",
 	image = img_icon_minus,
 	rastersize = "x35",
@@ -62,12 +62,12 @@ frame_list = iup.frame{
 			btn_shift_up,
 			btn_shift_down,
 			margin = "0x0",
-			gap = "5"
 		},
 		btn_remove,
-		expand = "YES"
+		expand = "YES",
+		gap = "5",
 	},
-	title = "List of objects",
+	title = " List of objects ",
 	margin = "10x10",
 	expand = "YES"
 }

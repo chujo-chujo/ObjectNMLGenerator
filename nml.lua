@@ -135,7 +135,7 @@ function nml:generate_nml()
 
 	-- GENERATE NML FOR OBJECTS
 	if not table_of_objects or #table_of_objects == 0 then
-		iup.Message("Warning", "No objects have been defined!\nExporting only the header...")
+		show_message("WARNING", "Warning", "  No objects have been defined!\n  Exporting just the header...", "OK")
 		return table.concat(NML), table.concat(LANG)
 	end
 
@@ -521,10 +521,6 @@ function nml:generate_nml()
 end
 
 function nml.write_NML_to_file(filename, NML, LANG)
-	if not filename:lower():match("%.nml$") then
-		filename = filename .. ".nml"
-	end
-
 	local NML_file = io.open("../" .. filename, "w")
 
 	local lang_dir = "../lang"

@@ -238,6 +238,7 @@ function config.build_settings_gui()
 		resize = "NO",
 		maxbox = "NO",
 		icon = img_favicon,
+		parentdialog = iup.GetDialog(dlg),
 	}
 	function dlg_settings:k_any(key)
 		if key == iup.K_cQ then
