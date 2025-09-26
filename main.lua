@@ -920,7 +920,7 @@ function build_gui()
 		vbox_main,
 		title = "Object NML for Those Who'd Rather Not",
 		rastersize = "720x694",
-		resize = "YES",
+		resize = "NO",
 		maxbox = "NO",
 		icon = img_favicon,
 		dropfilestarget = "YES",
