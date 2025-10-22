@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.2.0 (2025-10-22)
+ObjectNMLGenerator, v1.2.0 (2025-10-23)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -23,18 +23,25 @@ Additional functionality is modularized in:
 - create_image.lua
 - settings.lua
 - html.lua
------------------------------------------------------------------------------------------------------------]]
 
+Specialized operations utilize external libraries:
+- LuaFileSystem (MIT license)
+- Markdown.lua (MIT license)
+]]
+
+
+---------------------------------------------
+-- LOAD MODULES
+---------------------------------------------
+-- No need to update 'package.cpath', wlua54.exe from IUP distribution solves dependencies automatically
 require("iuplua")
 require("iupluacontrols")
 require("iupluaim")
 local im = require("imlua")
 lfs = require("lfs")
 
+-- Update 'package.path' with the 'lib' folder
 package.path = "lib/?.lua;lib/?/init.lua;" .. package.path
-pp = require("pl.pretty")
-path = require("pl.path")
-
 nml = require("nml")
 helpers = require("helpers")
 local yaml = require("chuyaml")
@@ -596,9 +603,6 @@ function export_html(type)
 		return iup.DEFAULT
 	else
 		html.create_file(type)
-		-- dofile("html.lua")
-		-- package.path = "lib/?.lua;lib/pl/init.lua;" .. package.path
-		-- require("pl.pretty").dump(table_of_objects)
 	end
 end
 
@@ -1000,7 +1004,7 @@ function build_gui()
 			save_list()
 			return iup.DEFAULT
 		elseif key == iup.K_cP then
-			export_html()
+			export_html("HTML")
 			return iup.DEFAULT
 		elseif key == iup.K_cK then
 			show_settings()
