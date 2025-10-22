@@ -220,7 +220,8 @@ function btn_compile.action()
 		return iup.DEFAULT
 	end
 
-	-- Capture CLI stdout + stderr from NMLC compiler (" 2>&1" is a shell redirection)
+	-- Capture CLI stdout + stderr from NMLC compiler
+	-- (" 2>&1" send standard error to where ever standard output is being redirected)
 	local cmd = "cd .. && nmlc -c " .. filename_nml
 	local pipe = io.popen(cmd .. " 2>&1")
 	local output = pipe:read("*all")

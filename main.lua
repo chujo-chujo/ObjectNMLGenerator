@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.1.0 (2025-09-26)
+ObjectNMLGenerator, v1.2.0 (2025-10-22)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -10,9 +10,11 @@ This Lua module defines and initializes UI components such as buttons, labels, e
 and includes functions that interact with the main application logic.
 
 The code is divided into separate files to improve readability:
+- menu.lua
 - toolbar.lua
 - header.lua
 - list.lua
+- generate.lua
 
 Additional functionality is modularized in:
 - nml.lua
@@ -20,17 +22,24 @@ Additional functionality is modularized in:
 - chuyaml.lua
 - create_image.lua
 - settings.lua
+- html.lua
 -----------------------------------------------------------------------------------------------------------]]
 
 require("iuplua")
 require("iupluacontrols")
 require("iupluaim")
 local im = require("imlua")
+lfs = require("lfs")
+
+package.path = "lib/?.lua;lib/?/init.lua;" .. package.path
+pp = require("pl.pretty")
+path = require("pl.path")
 
 nml = require("nml")
 helpers = require("helpers")
 local yaml = require("chuyaml")
-local create_image = require("create_image")
+create_image = require("create_image")
+local html = require("html")
 
 
 
@@ -81,6 +90,16 @@ preview_label = nil
 ---------------------------------------------
 -- FUNCTIONS
 ---------------------------------------------
+-- TODO
+function assign_icons()
+	btn_new.image = img_icon_new
+	btn_open.image = img_icon_open
+	btn_save.image = img_icon_save
+	btn_html.image = img_icon_html
+	btn_settings.image = img_icon_settings
+	btn_help.image = img_icon_help
+end
+
 function close_app()
 	if settings.ask_exit.state == "ON" then
 		local response = show_message(
@@ -571,6 +590,18 @@ function show_message(type, title, text, buttons)
 	return tonumber(msg.buttonresponse)
 end
 
+function export_html(type)
+	-- Type can be "HTML" or "MD"
+	if #table_of_objects == 0 then
+		return iup.DEFAULT
+	else
+		html.create_file(type)
+		-- dofile("html.lua")
+		-- package.path = "lib/?.lua;lib/pl/init.lua;" .. package.path
+		-- require("pl.pretty").dump(table_of_objects)
+	end
+end
+
 
 
 ---------------------------------------------
@@ -580,43 +611,65 @@ function build_gui()
 	-------------------------------------------------------
 	-- ICONS
 
+	img_empty      = iup.LoadImage("gfx/empty.png")
 	img_favicon    = iup.LoadImage("gui/icon(48x48).png")
 	img_nmlc       = iup.LoadImage("gui/nmlc.exe.png")
-	img_icon_new   = iup.LoadImage("gui/icon_new.png")
-	img_icon_open  = iup.LoadImage("gui/icon_open.png")
-	img_icon_save  = iup.LoadImage("gui/icon_save.png")
+	img_icon_new   = iup.LoadImage("gui/icon_new.png")--
+	img_icon_open  = iup.LoadImage("gui/icon_open.png")--
+	img_icon_save  = iup.LoadImage("gui/icon_save.png")--
+	img_icon_html  = iup.LoadImage("gui/icon_html.png")--
 	img_icon_up    = iup.LoadImage("gui/icon_up.png")
 	img_icon_down  = iup.LoadImage("gui/icon_down.png")
 	img_icon_plus  = iup.LoadImage("gui/icon_plus.png")
 	img_icon_minus = iup.LoadImage("gui/icon_minus.png")
 	img_icon_NML   = iup.LoadImage("gui/icon_generate2.png")
 	img_icon_NML_3 = iup.LoadImage("gui/icon_generate3.png")
-	img_icon_help  = iup.LoadImage("gui/icon_help.png")
+	img_icon_help  = iup.LoadImage("gui/icon_help.png")--
 	img_preview    = iup.LoadImage("gui/eye_small2.png")
 	img_icon_close = iup.LoadImage("gui/close.png")
-	img_icon_compile  = iup.LoadImage("gui/icon_compile2.png")
-	img_icon_settings = iup.LoadImage("gui/icon_settings.png")
+	img_icon_play  = iup.LoadImage("gui/play.png")
+	img_icon_stop  = iup.LoadImage("gui/stop.png")
+	img_icon_sort  = iup.LoadImage("gui/icon_sort.png")
+	img_icon_new_mini  = iup.LoadImage("gui/icon_new_mini.png")
+	img_icon_open_mini = iup.LoadImage("gui/icon_open_mini.png")
+	img_icon_save_mini = iup.LoadImage("gui/icon_save_mini.png")
+	img_icon_html_mini = iup.LoadImage("gui/icon_html_mini.png")
+	img_icon_md_mini   = iup.LoadImage("gui/icon_md_mini.png")
+	img_icon_help_mini = iup.LoadImage("gui/icon_help_mini.png")
+	img_icon_sort_d    = iup.LoadImage("gui/icon_sort_d.png")
+	img_icon_compile   = iup.LoadImage("gui/icon_compile2.png")
+	img_icon_settings  = iup.LoadImage("gui/icon_settings.png")--
+	img_icon_settings_mini = iup.LoadImage("gui/icon_settings_mini.png")
+	img_icon_update_mini   = iup.LoadImage("gui/icon_update_mini.png")
+	img_icon_test_compiler = iup.LoadImage("gui/icon_test_compiler_mini.png")
+
+
+
+	-------------------------------------------------------
+	-- MENU BAR
+
+	dofile("menu.lua")
 
 
 
 	-------------------------------------------------------
 	-- TOOLBAR
 
-	require("toolbar")
+	dofile("toolbar.lua")
 
 
 
 	-------------------------------------------------------
 	-- GRF BLOCK
 
-	require("header")
+	dofile("header.lua")
 
 
 
 	-------------------------------------------------------
 	-- LIST OF OBJECTS
 
-	require("list")
+	dofile("list.lua")
 	
 
 
@@ -877,6 +930,7 @@ function build_gui()
 				alignment="ACENTER"
 			},
 			iup.hbox{btn_add_object},
+			iup.fill{rastersize="x2"},
 			expand = "YES",
 			gap = "0",
 		},
@@ -899,12 +953,15 @@ function build_gui()
 	-------------------------------------------------------
 	-- GENERATE
 
-	require("generate")
+	dofile("generate.lua")
 	
 
 
 	-------------------------------------------------------
 	-- MAIN DIALOG WINDOW
+
+	-- TODO
+	assign_icons()
 	
 	-- root frame of dlg
 	vbox_main = iup.vbox{
@@ -919,10 +976,12 @@ function build_gui()
 	dlg = iup.dialog{
 		vbox_main,
 		title = "Object NML for Those Who'd Rather Not",
-		rastersize = "720x694",
+		-- rastersize = "720x694",
+		rastersize = "720x712",
 		resize = "NO",
 		maxbox = "NO",
 		icon = img_favicon,
+		menu = menu_bar,
 		dropfilestarget = "YES",
 		dropfiles_cb = function(self, filepath, num, x, y) open_file(filepath) return iup.DEFAULT end,
 		close_cb = function() if close_app() then return iup.CLOSE else return iup.IGNORE end end
@@ -940,15 +999,19 @@ function build_gui()
 		elseif key == iup.K_cS then
 			save_list()
 			return iup.DEFAULT
+		elseif key == iup.K_cP then
+			export_html()
+			return iup.DEFAULT
 		elseif key == iup.K_cK then
 			show_settings()
+			return iup.DEFAULT
 		elseif key == iup.K_cH or key == iup.K_F1 then
 			show_help()
 			return iup.DEFAULT
 		end
 	end
 
-	dlg:showxy(80, 30)
+	dlg:showxy(80, 15)
 
 	if iup.MainLoopLevel() == 0 then
 		iup.MainLoop()
