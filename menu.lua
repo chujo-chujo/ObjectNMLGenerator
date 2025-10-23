@@ -190,8 +190,26 @@ Pr&eferences
 
 menu_bar = create_menu(menu_string)
 
+-- Add "WIP" tag to not yet functional items
+function mark_wip_items(menu_bar)
+	local child = iup.GetChild(menu_bar, 0)
+	local i = 0
+	while child do
+		if iup.GetClassName(child) == "item" and child.active == "NO" and not child.title:find("^%[WIP%]%s") then
+			child.title = "[WIP] " .. child.title
+		elseif child_type == "submenu" then
+			-- Recursively handle submenus
+			if iup.GetChild(child, 0) then mark_wip_items(submenu) end
+		end
+		i = i + 1
+		child = iup.GetChild(menu_bar, i)
+	end
+end
+mark_wip_items(menu_bar)
+
 -- Set the parent menu of named toggle items as a radiobutton menu
 for _, name in ipairs{"toggle"} do
 	local found_toggle = iup.GetDialogChild(menu_bar, name)
 	if found_toggle then iup.GetParent(found_toggle).radio = "YES" end
 end
+

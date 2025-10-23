@@ -42,6 +42,7 @@ lfs = require("lfs")
 
 -- Update 'package.path' with the 'lib' folder
 package.path = "lib/?.lua;lib/?/init.lua;" .. package.path
+pprint = require("pl.pretty").dump
 nml = require("nml")
 helpers = require("helpers")
 local yaml = require("chuyaml")
@@ -212,7 +213,8 @@ function update_object_properties_widgets(index)
 		text_file_snow.value = subtable.file_snow
 		text_file_snow.bpp = subtable.bpp_snow
 
-		list_ground.value = subtable.ground
+		-- list_ground.value = subtable.ground
+		list_ground.valuestring = ground_map[tonumber(subtable.ground)]
 		if tostring(subtable.ground) ~= "1" then
 			text_ground.active = "NO"
 			btn_ground.active = "NO"
@@ -400,7 +402,7 @@ function add_to_table_of_objects()
 		file_snow = text_file_snow.value or nil,
 		bpp_snow = text_file_snow.bpp or nil,
 
-		ground = list_ground.value,
+		ground = ground_lookup[list_ground.valuestring],
 		file_ground = text_ground.value or nil,
 		
 		name = text_name.value,
@@ -679,10 +681,10 @@ function build_gui()
 
 	-------------------------------------------------------
 	-- OBJECT PROPERTIES
-
 	-- List of ground tiles
 	local ground = {
 		"Custom...",
+		"Match terrain",
 		"Grass",
 		"Desert",
 		"Desert 1/2",
@@ -692,16 +694,34 @@ function build_gui()
 		"Snow 3/4",
 		"Concrete",
 		"Water",
-		"Cleared"
+		"Cleared (dirt)"
 	}
-	-- Create a restoring map, associate label with value
+	local ground_number = {
+		1,
+		12,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9,
+		10,
+		11
+	}
+
+	-- Create a restoring map, associate label with value (to keep backward compatibility when changing order)
 	ground_map = {}
-	for i, item in ipairs(ground) do ground_map[item] = i end
+	for i, ground_string in ipairs(ground) do ground_map[ground_number[i]] = ground_string end
+	-- Create a reverse lookup table VALUE -> KEY
+	ground_lookup = {}
+	for k, v in pairs(ground_map) do ground_lookup[v] = k end
 
 	list_ground = iup.list{
 		dropdown = "YES",
 		value = 1,
-		visible_items = 12
+		visible_items = 13
 	}
 	for i, item in ipairs(ground) do list_ground[i] = item end
 

@@ -41,6 +41,8 @@ nml.header = [[grf {
 
 // GROUND
 spriteset (spriteset_empty, ZOOM_LEVEL_NORMAL, BIT_DEPTH_32BPP, "gfx/empty_pixel.png") {[0, 0, 1, 1, 0, 0]}
+
+
 ]]
 
 nml.spriteset_tmpl = 'spriteset(spriteset_%s_%s_%d_%d%s,%s "gfx/%s") {[ %d, %d, %d, %d, %d, %d ]}'
@@ -52,6 +54,29 @@ nml.layout_tmpl_snow = [[spritelayout spritelayout_%s_%s_%d_%d {
 	building { sprite: spriteset_%s_%s_%d_%d_snow(); hide_sprite: (nearby_tile_height(%d,%d) < snowline_height); zextent: 250; } }]]
 
 nml.layout_tmpl = 'spritelayout spritelayout_%s_%s_%d_%d {\n    ground { sprite: %s; }\n    building { sprite: spriteset_%s_%s_%d_%d(); zextent: 250; } }'
+
+nml.function_get_terrain_tile = [[
+// Detect terrain type, store result into STORE_TEMP(..., 0)
+switch (FEAT_OBJECTS, SELF, function_get_terrain_tile, [    
+    STORE_TEMP( terrain_type == TILETYPE_DESERT ? GROUNDSPRITE_DESERT : GROUNDSPRITE_NORMAL, 0 ),
+
+    STORE_TEMP( terrain_type == TILETYPE_DESERT && (
+        (nearby_tile_terrain_type(-1,-1) == TILETYPE_NORMAL) +
+        (nearby_tile_terrain_type(-1, 0) == TILETYPE_NORMAL) +
+        (nearby_tile_terrain_type(-1, 1) == TILETYPE_NORMAL) +
+        (nearby_tile_terrain_type( 0,-1) == TILETYPE_NORMAL) +
+        (nearby_tile_terrain_type( 0, 1) == TILETYPE_NORMAL) +
+        (nearby_tile_terrain_type( 1,-1) == TILETYPE_NORMAL) +
+        (nearby_tile_terrain_type( 1, 0) == TILETYPE_NORMAL) +
+        (nearby_tile_terrain_type( 1, 1) == TILETYPE_NORMAL) > 1) ? 4512 : LOAD_TEMP(0), 0 ),
+
+    STORE_TEMP( terrain_type == TILETYPE_SNOW ? GROUNDSPRITE_SNOW : LOAD_TEMP(0), 0 ),
+    STORE_TEMP( snowline_height == 0xFF ? 0xFF : nearby_tile_height(0, 0) - snowline_height, 127 ),
+    STORE_TEMP( (LOAD_TEMP(127) == -1) ? GROUNDSPRITE_SNOW_1_4 : LOAD_TEMP(0), 0 ),
+    STORE_TEMP( (LOAD_TEMP(127) ==  0) ? GROUNDSPRITE_SNOW_2_4 : LOAD_TEMP(0), 0 ),
+    STORE_TEMP( (LOAD_TEMP(127) ==  1) ? GROUNDSPRITE_SNOW_3_4 : LOAD_TEMP(0), 0 ) ])
+    { return; }
+]]
 
 nml.item_tmpl = [[
 item (FEAT_OBJECTS, object_%s) {
@@ -124,6 +149,16 @@ function nml:generate_nml()
 	header = header:gsub("EDIT_COMPATIBLE_VERSION", min_compatible_version)
 	table.insert(NML, header)
 
+	-- ADD FUNCTION SWITCHES AFTER HEADER (if needed)
+	-- Ground matching terrain (mapped to 12)?
+	for i = 1, #table_of_objects do
+		if tostring(table_of_objects[i].ground) == "12" then
+			table.insert(NML, "\n\n// FUNCTIONS\n")
+			table.insert(NML, self.function_get_terrain_tile)
+			break
+		end
+	end
+
 	-- REPLACE KEYWORDS IN LANGUAGE FILE
 	local LANG = {}
 	local english = self.lang
@@ -184,26 +219,33 @@ function nml:generate_nml()
 		end
 
 		-- Set up ground - a string from a map if predefined ground sprite, else spriteset (put definition at the end of 'header')
+		-- Special case: ground matching terrain -> append the function after 'header'
 		local name_ground = ""
 		local GROUNDSPRITE = ""
 		if list_ground_value == "1" then
 			name_ground = helpers.get_stem(filename_ground)
 			GROUNDSPRITE = "spriteset_" .. name_ground .. "()"
+		elseif list_ground_value == "12" then
+			GROUNDSPRITE = "LOAD_TEMP(0)"
 		else
 			GROUNDSPRITE = self.groundsprite_map[list_ground_value]
 		end
 		if list_ground_value == "1" and not used_grounds[filename_ground] then
 			local output = {}
+			-- Go through the header (NML[1]) line by line
 			for line in NML[1]:gmatch("([^\n]*)\n?") do
+				-- prevent adding redundant blank lines at the end
 				if line == "" and #output > 0 and output[#output] == "" then
 					break
 				end
 				table.insert(output, line)
+				-- Add spriteset definition immediately after "// GROUND"
 				if line:find("// GROUND") then
 					table.insert(output, string.format('spriteset (spriteset_%s, ZOOM_LEVEL_NORMAL, BIT_DEPTH_32BPP, "gfx/%s") {[0, 0, 64, 31, -31, 0]}',
 						name_ground, filename_ground))
 				end
 			end
+			-- Rebuild and replace the modified content
 			NML[1] = table.concat(output, "\n")
 			used_grounds[filename_ground] = true
 		end
@@ -483,7 +525,10 @@ function nml:generate_nml()
 
 
 		-- Views and menu switches
-		local views_switch = { string.format("switch (FEAT_OBJECTS, SELF, switch_%s_views, [view]) {", name) }
+		local functions_string = ""
+		if list_ground_value == "12" then functions_string = functions_string .. "function_get_terrain_tile(), " end
+		
+		local views_switch = { string.format("switch (FEAT_OBJECTS, SELF, switch_%s_views, [%sview]) {", name, functions_string) }
 		local menu_switch  = { string.format("switch (FEAT_OBJECTS, SELF, switch_%s_menu, [view]) {", name) }
 
 		for i = 0, number_of_views - 1 do
