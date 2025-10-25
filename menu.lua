@@ -1,4 +1,4 @@
--- Implement menu settings into the settings file or a separate storage?
+-- TODO: Implement menu settings into the settings file or a separate storage?
 local menu_settings = {}
 
 local function create_menu(menu_string)
@@ -142,10 +142,12 @@ local function create_menu(menu_string)
 end
 
 function test_compiler()
-	local cwd = path.currentdir()
-	path.chdir("..")
-	if not helpers.file_exists("nmlc.exe") then
-		show_message("WARNING", "NMLC", '  NML Compiler not found!\n\n  "nmlc.exe" has to be placed in the root folder of this app.', "OK")
+	local cwd = lfs.currentdir()
+	lfs.chdir("..")
+
+	if not is_nmlc() then
+		lfs.chdir(cwd)
+		return iup.DEFAULT
 	else
 		local cmd = "nmlc --version"
 		local pipe = io.popen(cmd .. " 2>&1")
@@ -157,7 +159,8 @@ function test_compiler()
 
 		show_message("INFORMATION", "NMLC", "  NML Compiler found!\n\n  Version: " .. version .. "\n  nmlc path: " .. nmlc_path .. ".exe", "OK")
 	end
-	path.chdir(cwd)
+	
+	lfs.chdir(cwd)
 end
 
 menu_string = [[
@@ -167,8 +170,8 @@ menu_string = [[
 	&Save As...\tCtrl+S {titleimage = img_icon_save_mini, action = save_list}
 	SEPARATOR
 	Export
-		As &HTML... {titleimage = img_icon_html_mini, action = export_html("HTML")}
-		As &MD... {titleimage = img_icon_md_mini, action = export_html("MD")}
+		As &HTML {titleimage = img_icon_html_mini, action = export_html("HTML")}
+		As &MD {titleimage = img_icon_md_mini, action = export_html("MD")}
 	SEPARATOR
 	&Quit\tCtrl+Q, Esc {titleimage = img_icon_close, action = close_app}
 &Compiler
@@ -183,7 +186,7 @@ Pr&eferences
 		&Muted {active = "NO"}
 &Help
 	&Check for updates {titleimage = img_icon_update_mini, active = "NO"}
-	&Check for updates automatically (once a month)? {autotoggle = "YES", value = "OFF", active = "NO"}
+	Check for updates automatically (once a month)? {autotoggle = "YES", value = "OFF", active = "NO"}
 	SEPARATOR
 	&Manual {titleimage = img_icon_help_mini, action = show_help}
 ]]
@@ -195,11 +198,13 @@ function mark_wip_items(menu_bar)
 	local child = iup.GetChild(menu_bar, 0)
 	local i = 0
 	while child do
-		if iup.GetClassName(child) == "item" and child.active == "NO" and not child.title:find("^%[WIP%]%s") then
+		local child_type = iup.GetClassName(child)
+		if child_type == "item" and child.active == "NO" and not child.title:find("^%[WIP%]%s") then
 			child.title = "[WIP] " .. child.title
 		elseif child_type == "submenu" then
 			-- Recursively handle submenus
-			if iup.GetChild(child, 0) then mark_wip_items(submenu) end
+			local submenu = iup.GetChild(child, 0)
+			if submenu then mark_wip_items(submenu) end
 		end
 		i = i + 1
 		child = iup.GetChild(menu_bar, i)

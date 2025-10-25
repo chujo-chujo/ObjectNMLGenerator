@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.2.0 (2025-10-23)
+ObjectNMLGenerator, v1.2.0 (2025-10-26)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -42,7 +42,6 @@ lfs = require("lfs")
 
 -- Update 'package.path' with the 'lib' folder
 package.path = "lib/?.lua;lib/?/init.lua;" .. package.path
-pprint = require("pl.pretty").dump
 nml = require("nml")
 helpers = require("helpers")
 local yaml = require("chuyaml")
@@ -213,7 +212,6 @@ function update_object_properties_widgets(index)
 		text_file_snow.value = subtable.file_snow
 		text_file_snow.bpp = subtable.bpp_snow
 
-		-- list_ground.value = subtable.ground
 		list_ground.valuestring = ground_map[tonumber(subtable.ground)]
 		if tostring(subtable.ground) ~= "1" then
 			text_ground.active = "NO"
@@ -605,6 +603,66 @@ function export_html(type)
 		return iup.DEFAULT
 	else
 		html.create_file(type)
+	end
+end
+
+function is_nmlc()
+	-- Check for the presence of "nmlc.exe" in the root folder
+	if not helpers.file_exists("nmlc.exe") then
+		local cbox_width, cbox_height = 370, 420
+
+		local label1 = iup.label{title = "NMLC.EXE not found!",	font = "Helvetica, Bold 10"}
+		local label2 = iup.label{title = 'The compiler "nmlc.exe" needs to be in\nthe root folder of the app (i.e., next to "START.bat").'}
+		local label_img = iup.label{image = img_nmlc}
+		local label3 = iup.label{title = 'You can download the latest release from the official page:'}
+		local label4 = iup.label{title = '(look for the "nml-standalone-x.x.x-win64.zip" archive)'}
+
+		local link = iup.link{url = "https://github.com/OpenTTD/nml/releases", title = "NML Releases on Github"}
+		iup.SetAttribute(link, "FONTSIZE", "11")
+
+		local btn_ok = iup.button{
+			title = "OK", rastersize = "90x30",
+			action = function() return iup.CLOSE end
+		}
+
+		local main_cbox = iup.cbox{
+			label1,
+			label2,
+			label_img,
+			label3,
+			label4,
+			link,
+			btn_ok,
+			rastersize = cbox_width .. "x" .. cbox_height,
+		}
+
+		-- Set absolute positions
+		label1.cx, label1.cy = 30, 30
+		label2.cx, label2.cy = 30, 60
+		label_img.cx, label_img.cy = 30, 100
+		label3.cx, label3.cy = 30, 255
+		link.cx, link.cy = 30, 290
+		label4.cx, label4.cy = 30, 315
+		btn_ok.cx = cbox_width // 2 - 90 // 2
+		btn_ok.cy = cbox_height - 50
+
+		local dlg_compiler = iup.dialog{
+			main_cbox,
+			title = "Missing Compiler",
+			resize = "NO",
+			maxbox = "NO",
+			icon = img_favicon,
+			parentdialog = iup.GetDialog(dlg),
+		}
+		function dlg_compiler:k_any(key)
+			if key == iup.K_cQ or key == iup.K_ESC then	return iup.CLOSE end
+		end
+
+		dlg_compiler:popup(IUP_CENTERPARENT, IUP_CENTERPARENT)
+		
+		return false
+	else
+		return true
 	end
 end
 
@@ -1000,7 +1058,6 @@ function build_gui()
 	dlg = iup.dialog{
 		vbox_main,
 		title = "Object NML for Those Who'd Rather Not",
-		-- rastersize = "720x694",
 		rastersize = "720x712",
 		resize = "NO",
 		maxbox = "NO",

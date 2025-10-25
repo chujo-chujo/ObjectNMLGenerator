@@ -19,6 +19,8 @@ Functions included:
 - str_to_bool(str): Convert boolean-like strings into proper boolean values.
 - contains_any(tbl, values): Check a table for membership of any item from a list.
 - enumerate(table): Returns a pair of variables 'index', 'table[index]' (similar to Python)
+- generate_random_string(length): Generate a random string of 'length' characters, chosen from [a-zA-Z0-9].
+- windows_safe_filename(string): Replace characters not allowed in Windows filenames: \ / : * ? " < > | and trailing dots and spaces.
 ]]
 
 local helpers = {}
@@ -195,6 +197,37 @@ function helpers.enumerate(table)
     end
 end
 
+-- Returns a random string made of [a-zA-Z0-9] of given 'length'
+function helpers.generate_random_string(length)
+    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    local result = {}
+    for i = 1, length do
+        local index = math.random(1, tonumber(#chars))
+        table.insert(result, chars:sub(index, index))
+    end
+    
+    return table.concat(result)
+end
+
+-- Returns a "sanitized" string safe for use as a Windows filename
+function helpers.windows_safe_filename(name)
+    local safe = name:gsub('[\\/:*?"<>|]', '_')
+    safe = safe:gsub('[%. ]+$', '')
+
+    -- Replace reserved filenames
+    local reserved = {
+        "CON", "PRN", "AUX", "NUL",
+        "COM[1-9]", "LPT[1-9]"
+    }
+    for _, pattern in ipairs(reserved) do
+        if safe:match('^' .. pattern .. '$') then
+            safe = '_' .. safe
+            break
+        end
+    end
+
+    return safe
+end
 
 
 return helpers

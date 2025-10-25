@@ -90,68 +90,9 @@ local btn_compile = iup.button{
 iup.SetAttribute(btn_compile, "FONTSTYLE", "BOLD")
 
 function btn_compile.action()
-	-- Check for the presence of "nmlc.exe"
-	if not helpers.file_exists("../nmlc.exe") then
-		local cbox_width, cbox_height = 370, 420
-
-		local label1 = iup.label{title = "NMLC.EXE not found!",	font = "Helvetica, Bold 10"}
-		local label2 = iup.label{title = 'The compiler "nmlc.exe" needs to be in\nthe root folder of the app (i.e., next to "START.bat").'}
-		local label_img = iup.label{image = img_nmlc}
-		local label3 = iup.label{title = 'You can download the latest release from the official page:'}
-		local label4 = iup.label{title = '(look for the "nml-standalone-x.x.x-win64.zip" archive)'}
-
-		local link = iup.link{url = "https://github.com/OpenTTD/nml/releases", title = "NML Releases on Github"}
-		iup.SetAttribute(link, "FONTSIZE", "11")
-
-		local btn_ok = iup.button{
-			title = "OK", rastersize = "90x30",
-			action = function() return iup.CLOSE end
-		}
-
-		local main_cbox = iup.cbox{
-			label1,
-			label2,
-			label_img,
-			label3,
-			label4,
-			link,
-			btn_ok,
-			rastersize = cbox_width .. "x" .. cbox_height,
-		}
-
-		-- Set absolute positions
-		label1.cx = 30
-		label1.cy = 30
-		label2.cx = 30
-		label2.cy = 60
-		label_img.cx = 30
-		label_img.cy = 100
-		label3.cx = 30
-		label3.cy = 255
-		link.cx = 30
-		link.cy = 290
-		label4.cx = 30
-		label4.cy = 315
-		btn_ok.cx = cbox_width // 2 - 90 // 2
-		btn_ok.cy = cbox_height - 50
-
-		local dlg_compiler = iup.dialog{
-			main_cbox,
-			title = "Missing Compiler",
-			resize = "NO",
-			maxbox = "NO",
-			icon = img_favicon,
-			parentdialog = iup.GetDialog(dlg),
-		}
-		function dlg_compiler:k_any(key)
-			if key == iup.K_cQ or key == iup.K_ESC then	return iup.CLOSE end
-		end
-
-		dlg_compiler:popup(IUP_CENTERPARENT, IUP_CENTERPARENT)
-		
+	if not is_nmlc() then
 		return iup.DEFAULT
 	end
-
 
 	-- Multiline text to show console output
 	local console = iup.text{
