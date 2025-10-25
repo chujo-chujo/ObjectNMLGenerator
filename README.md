@@ -39,6 +39,7 @@ After extracting the contents of `ObjectNMLGenerator-winx64-portable.zip`, you c
 This script uses the [IUP Portable User Interface](https://www.tecgraf.puc-rio.br/iup/) (`iuplua`) and [IM image processing library](https://www.tecgraf.puc-rio.br/im/) (`imlua`), licensed under the terms of the MIT license.<br>
 For full copyright notice, go to [Tecgraf Library License](https://www.tecgraf.puc-rio.br/iup/en/copyright.html).
 
+The [Markdown.lua](https://www.frykholm.se/files/markdown.lua) library is used to convert Markdown-formatted output to HTML; it is distributed under the MIT license.
 
 
 ## Usage
