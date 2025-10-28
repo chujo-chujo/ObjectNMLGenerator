@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.1 (2025-10-28)
+
+**Fixed**
+- Incorrect path handling preventing `nmlc.exe` from running
+
+
 ## v1.2.0 (2025-10-26)
 
 **Added**
