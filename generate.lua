@@ -90,9 +90,17 @@ local btn_compile = iup.button{
 iup.SetAttribute(btn_compile, "FONTSTYLE", "BOLD")
 
 function btn_compile.action()
+	-- Go up one directory level to use NMLC
+	local cwd = lfs.currentdir()
+	lfs.chdir("..")
+
 	if not is_nmlc() then
+		lfs.chdir(cwd)
 		return iup.DEFAULT
 	end
+
+	-- Return CWD into "_files" ('btn_generate' itself goes one level up)
+	lfs.chdir(cwd)
 
 	-- Multiline text to show console output
 	local console = iup.text{
@@ -163,7 +171,7 @@ function btn_compile.action()
 
 	-- Capture CLI stdout + stderr from NMLC compiler
 	-- (" 2>&1" send standard error to where ever standard output is being redirected)
-	local cmd = "cd .. && nmlc -c " .. filename_nml
+	local cmd = "cd.. && nmlc -c " .. filename_nml
 	local pipe = io.popen(cmd .. " 2>&1")
 	local output = pipe:read("*all")
 	pipe:close()

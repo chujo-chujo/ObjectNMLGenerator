@@ -142,6 +142,7 @@ local function create_menu(menu_string)
 end
 
 function test_compiler()
+	-- Go up one directory level to use NMLC
 	local cwd = lfs.currentdir()
 	lfs.chdir("..")
 
@@ -160,6 +161,7 @@ function test_compiler()
 		show_message("INFORMATION", "NMLC", "  NML Compiler found!\n\n  Version: " .. version .. "\n  nmlc path: " .. nmlc_path .. ".exe", "OK")
 	end
 	
+	-- Return CWD into "_files"
 	lfs.chdir(cwd)
 end
 

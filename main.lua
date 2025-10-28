@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.2.0 (2025-10-26)
+ObjectNMLGenerator, v1.2.1 (2025-10-28)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
