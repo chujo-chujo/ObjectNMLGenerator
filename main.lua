@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.3.0 (2025-12-03)
+ObjectNMLGenerator, v1.3.0 (2025-12-04)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -1099,6 +1099,11 @@ function build_gui()
 	end
 
 	dlg:showxy(80, 15)
+
+	-- If automatic check for updates activated, compare dates
+	if settings.menu_auto_check_update == "ON" then
+		auto_check_updates_compare_dates()
+	end
 
 	if iup.MainLoopLevel() == 0 then
 		iup.MainLoop()

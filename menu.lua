@@ -165,7 +165,7 @@ function test_compiler()
 	lfs.chdir(cwd)
 end
 
-function check_updates()
+function check_updates(auto)
 	local label_checking_updates = iup.label{title = "Checking for updates..."}
 	local msg_checking_updates = iup.dialog{
 		iup.vbox{
@@ -221,15 +221,47 @@ function check_updates()
 				return iup.DEFAULT
 			end
 		else
-			show_message("INFORMATION", "", "  You are using the latest version (" .. CURRENT_VERSION .. ").", "OK")			
+			if not auto then
+				show_message("INFORMATION", "", "  You are using the latest version (" .. CURRENT_VERSION .. ").", "OK")			
+			end
 		end
 		iup.Destroy(webbrowser_dlg)
 	end
 
 	webbrowser_dlg:map()
+
+	settings.menu_last_check_update = os.date("%Y-%m-%d")
 end
 
-menu_string = [[
+function auto_check_updates_cb()
+	if settings.menu_auto_check_update == "OFF" then
+		settings.menu_auto_check_update = "ON"
+	else
+		settings.menu_auto_check_update = "OFF"
+	end
+end
+
+function auto_check_updates_compare_dates()
+	local last_check = settings.menu_last_check_update
+	local last_year, last_month, last_day = last_check:match("(%d+)-(%d+)-(%d+)")
+
+	local current_date = os.date("%Y-%m-%d")
+	local current_year, current_month, current_day = current_date:match("(%d+)-(%d+)-(%d+)")
+
+	local time1 = os.time{year = last_year,    month = last_month,    day = last_day}
+	local time2 = os.time{year = current_year, month = current_month, day = current_day}
+
+	-- Difference in days from seconds
+	local difference_in_seconds = os.difftime(time2, time1)
+	local difference_in_days = difference_in_seconds / 60 / 60 // 24
+	if difference_in_days > 90 then
+		check_updates(true)
+	end
+end
+
+
+
+menu_string = string.format([[
 &Project
 	&New\tCtrl+N {titleimage = img_icon_new_mini, action = new_list}
 	&Open...\tCtrl+O {titleimage = img_icon_open_mini, action = open_file(nil)}
@@ -252,10 +284,11 @@ Pr&eferences
 		&Muted {active = "NO"}
 &Help
 	&Check for updates {titleimage = img_icon_update_mini, action = check_updates}
-	Check for updates automatically (once a month)? {autotoggle = "YES", value = "OFF", active = "NO"}
+	Check for updates automatically (quarterly)? {autotoggle = "YES", value = "%s", action = auto_check_updates_cb}
 	SEPARATOR
 	&Manual {titleimage = img_icon_help_mini, action = show_help}
-]]
+]],
+	settings.menu_auto_check_update)
 
 menu_bar = create_menu(menu_string)
 
@@ -283,4 +316,3 @@ for _, name in ipairs{"toggle"} do
 	local found_toggle = iup.GetDialogChild(menu_bar, name)
 	if found_toggle then iup.GetParent(found_toggle).radio = "YES" end
 end
-

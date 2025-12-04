@@ -31,6 +31,9 @@ settings = {
 	last_used_folder = default_path,
 	last_export_filename = "generated.nml",
 
+	menu_last_check_update = "1970-01-01",
+	menu_auto_check_update = "YES",
+
 	show_preview_file = {
 		index = 1,
 		state = "OFF",
@@ -132,9 +135,9 @@ function config.load_settings()
 	end
 	-- Update "settings" variable
 	for line in file:lines() do
-		local key, value = line:match("([^=]+)=([^=]+)")
+		local key, value = line:match("^%s*(.-)%s*=%s*(.-)%s*$")
 		if key and value then
-			if value == "ON"  or value == "OFF"  then
+			if (value == "ON" or value == "OFF") and not helpers.startswith(key, "menu_") then
 				settings[key].state = value
 			else
 				settings[key] = value
@@ -157,7 +160,16 @@ function config.save_settings()
 			settings.last_export_filename = "generated.nml"
 		end
 
-		for k, v in pairs(settings) do
+		-- Sort keys alphabetically
+		local keys = {}
+		for k, _ in pairs(settings) do
+		    keys[#keys + 1] = k
+		end
+		table.sort(keys)
+
+		-- for k, v in pairs(settings) do
+		for _, k in ipairs(keys) do
+			v = settings[k]
 			-- If not 'table', then save strings of "last_used" directly
 			if type(v) ~= "table" then
 				file:write(string.format("%s=%s\n", k, v))
@@ -251,7 +263,7 @@ function config.build_settings_gui()
 		end
 	end
 
-	dlg_settings:popup(IUP_CENTERPARENT, IUP_CENTERPARENT)
+	dlg_settings:popup(iup.CENTERPARENT, iup.CENTERPARENT)
 end
 
 
