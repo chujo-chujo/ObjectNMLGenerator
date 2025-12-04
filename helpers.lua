@@ -21,6 +21,7 @@ Functions included:
 - enumerate(table): Returns a pair of variables 'index', 'table[index]' (similar to Python)
 - generate_random_string(length): Generate a random string of 'length' characters, chosen from [a-zA-Z0-9].
 - windows_safe_filename(string): Replace characters not allowed in Windows filenames: \ / : * ? " < > | and trailing dots and spaces.
+- sleep(seconds): Creates an empty loop until a specified time in seconds has passed.
 ]]
 
 local helpers = {}
@@ -227,6 +228,14 @@ function helpers.windows_safe_filename(name)
     end
 
     return safe
+end
+
+-- Pauses script for 'seconds' (int, float)
+function helpers.sleep(seconds)
+    local t0 = os.clock()
+    while os.clock() - t0 <= seconds do
+        -- Nothing
+    end
 end
 
 

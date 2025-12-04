@@ -165,6 +165,70 @@ function test_compiler()
 	lfs.chdir(cwd)
 end
 
+function check_updates()
+	local label_checking_updates = iup.label{title = "Checking for updates..."}
+	local msg_checking_updates = iup.dialog{
+		iup.vbox{
+			iup.fill{},
+			iup.hbox{
+				iup.fill{},
+				label_checking_updates,
+				iup.fill{},
+			},
+			iup.fill{},
+		},
+		parentdialog = iup.GetDialog(dlg),
+		title = "",
+		rastersize = "200x100",
+		menubox = "NO",
+		resize = "NO",
+	}
+	iup.SetAttribute(label_checking_updates, "FONTSTYLE", "Bold")
+	msg_checking_updates:showxy(iup.CENTERPARENT, iup.CENTERPARENT)
+
+	-- Create a hidden temporary dialog holding "iup.webbrowser" to extract the version number of the latest release
+	-- To realize the web browser widget, a dialog needs to be realized; to realize the dialog without showing it, "iup.Map()" needs to be called
+	local url = "https://github.com/chujo-chujo/ObjectNMLGenerator/releases/latest"
+	local webbrowser = iup.webbrowser{}
+	local webbrowser_dlg = iup.dialog{webbrowser, size = "0x0", visible = "NO"}
+
+	webbrowser.value = url
+	webbrowser.completed_cb = function(self, url)
+		-- Called when a page successfully completed
+		local regex = "<title>.*v(%d+%.%d+%.%d+).*"
+		local version = self.html:match(regex)
+		iup.Destroy(msg_checking_updates)
+
+		if version ~= CURRENT_VERSION then
+			local response = show_message(
+				"QUESTION",
+				"", 
+				"  A newer version has been found.\n\n  Your version: " .. CURRENT_VERSION .. "\n  Latest release: " .. version .. "\n\n  Would you like to download it now?", 
+				"OKCANCEL")
+			if response == 1 then
+				-- Windows
+				if package.config:sub(1,1) == "\\" then
+					os.execute('start "" "' .. url .. '"')
+				-- macOS
+				elseif io.popen("uname"):read("*l") == "Darwin" then
+					os.execute('open "' .. url .. '"')
+				-- Linux / BSD
+				else
+					os.execute('xdg-open "' .. url .. '"')
+				end
+				return iup.DEFAULT
+			else
+				return iup.DEFAULT
+			end
+		else
+			show_message("INFORMATION", "", "  You are using the latest version (" .. CURRENT_VERSION .. ").", "OK")			
+		end
+		iup.Destroy(webbrowser_dlg)
+	end
+
+	webbrowser_dlg:map()
+end
+
 menu_string = [[
 &Project
 	&New\tCtrl+N {titleimage = img_icon_new_mini, action = new_list}
@@ -187,7 +251,7 @@ Pr&eferences
 		&Default {value = "ON", name = "toggle"}
 		&Muted {active = "NO"}
 &Help
-	&Check for updates {titleimage = img_icon_update_mini, active = "NO"}
+	&Check for updates {titleimage = img_icon_update_mini, action = check_updates}
 	Check for updates automatically (once a month)? {autotoggle = "YES", value = "OFF", active = "NO"}
 	SEPARATOR
 	&Manual {titleimage = img_icon_help_mini, action = show_help}

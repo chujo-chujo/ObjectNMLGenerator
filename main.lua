@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.2.1 (2025-10-28)
+ObjectNMLGenerator, v1.3.0 (2025-12-03)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -37,6 +37,7 @@ Specialized operations utilize external libraries:
 require("iuplua")
 require("iupluacontrols")
 require("iupluaim")
+require('iupluaweb')
 local im = require("imlua")
 lfs = require("lfs")
 
@@ -53,6 +54,11 @@ local html = require("html")
 ---------------------------------------------
 -- GLOBAL VARIABLES
 ---------------------------------------------
+-- Version number variable used to check for updates
+CURRENT_VERSION = "1.3.0"
+-- Initialize the random number generator for randomized GRFID generation
+math.randomseed(os.time())
+
 -- Default path is one level up from '_files'
 local script_path = debug.getinfo(1, "S").source:match("@(.*\\)")
 default_path = script_path:match("^(.*[\\/])[^\\/]+[\\/]$")
@@ -471,7 +477,7 @@ end
 function show_help()
 	local url = default_path .. "Manual.html"
 	if not helpers.file_exists(url) then
-		local response = show_message("QUESTION", "Help", "  The manual could not be found locally.\n  Would you like to open the online version?", "OKCANCEL")
+		local response = show_message("QUESTION", "Manual", "  The manual could not be found locally.\n  Would you like to open the online version?", "OKCANCEL")
 		if response == 1 then
 			url = "https://chujo-chujo.github.io/ObjectNMLGenerator/"
 		else
