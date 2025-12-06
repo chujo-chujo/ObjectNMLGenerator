@@ -178,10 +178,7 @@ function check_updates(auto)
 			iup.fill{},
 		},
 		parentdialog = iup.GetDialog(dlg),
-		title = "",
-		rastersize = "200x100",
-		menubox = "NO",
-		resize = "NO",
+		rastersize = "200x100", title = "", menubox = "NO", resize = "NO"
 	}
 	iup.SetAttribute(label_checking_updates, "FONTSTYLE", "Bold")
 	msg_checking_updates:showxy(iup.CENTERPARENT, iup.CENTERPARENT)
@@ -233,6 +230,13 @@ function check_updates(auto)
 	settings.menu_last_check_update = os.date("%Y-%m-%d")
 end
 
+function copy_to_openttd_cb()
+	if settings.menu_copy_to_openttd == "OFF" then
+		settings.menu_copy_to_openttd = "ON"
+	else
+		settings.menu_copy_to_openttd = "OFF"
+	end
+end
 function auto_check_updates_cb()
 	if settings.menu_auto_check_update == "OFF" then
 		settings.menu_auto_check_update = "ON"
@@ -259,6 +263,18 @@ function auto_check_updates_compare_dates()
 	end
 end
 
+function set_path_to_openttd()
+	local folder_dlg = iup.filedlg{
+		parentdialog = iup.GetDialog(dlg),
+		dialogtype   = "DIR",
+		directory    = settings.menu_path_to_openttd or (os.getenv("USERPROFILE") .. "\\Documents\\OpenTTD\\newgrf"),
+	}
+	folder_dlg:popup(iup.LEFTPARENT, iup.TOPPARENT)
+	if folder_dlg.status ~= "-1" then
+		settings.menu_path_to_openttd = folder_dlg.value
+	end
+end
+
 
 
 menu_string = string.format([[
@@ -274,8 +290,8 @@ menu_string = string.format([[
 	&Quit\tCtrl+Q, Esc {titleimage = img_icon_close, action = close_app}
 &Compiler
 	&Test compiler {titleimage = img_icon_test_compiler, action = test_compiler}
-	Set &path to the OpenTTD "newgrf" folder... {active = "NO"}
-	&Copy GRF after compiling? {autotoggle = "YES", value = "ON", active = "NO"}
+	Set &path to the OpenTTD "newgrf" folder... {titleimage = img_icon_folder_mini, action = set_path_to_openttd}
+	&Copy GRF after compiling? {autotoggle = "YES", value = "%s", action = copy_to_openttd_cb}
 Pr&eferences
 	&Settings... {titleimage = img_icon_settings_mini, action = show_settings}
 	SEPARATOR
@@ -288,6 +304,7 @@ Pr&eferences
 	SEPARATOR
 	&Manual {titleimage = img_icon_help_mini, action = show_help}
 ]],
+	settings.menu_copy_to_openttd,
 	settings.menu_auto_check_update)
 
 menu_bar = create_menu(menu_string)

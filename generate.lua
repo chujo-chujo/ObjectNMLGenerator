@@ -176,6 +176,13 @@ function btn_compile.action()
 	local output = pipe:read("*all")
 	pipe:close()
 	console.value = output
+	-- console.value = "TEST"
+
+	if settings.menu_copy_to_openttd == "ON" then
+		local filename_grf = filename_nml:match("^(.*)%.") .. ".grf"
+		local dst = settings.menu_path_to_openttd .. "\\" .. filename_grf
+		local ok = os.execute(string.format('cd.. && copy "%s" "%s"', filename_grf, dst))
+	end
 
 	dlg_console:popup(x, y)
 end

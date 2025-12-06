@@ -1,5 +1,5 @@
 --[[
-ObjectNMLGenerator, v1.3.0 (2025-12-04)
+ObjectNMLGenerator, v1.3.0 (2025-12-06)
 Author: chujo
 License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -700,6 +700,7 @@ function build_gui()
 	img_icon_play  = iup.LoadImage("gui/play.png")
 	img_icon_stop  = iup.LoadImage("gui/stop.png")
 	img_icon_sort  = iup.LoadImage("gui/icon_sort.png")
+	img_icon_random    = iup.LoadImage("gui/icon_random.png")
 	img_icon_new_mini  = iup.LoadImage("gui/icon_new_mini.png")
 	img_icon_open_mini = iup.LoadImage("gui/icon_open_mini.png")
 	img_icon_save_mini = iup.LoadImage("gui/icon_save_mini.png")
@@ -709,6 +710,7 @@ function build_gui()
 	img_icon_sort_d    = iup.LoadImage("gui/icon_sort_d.png")
 	img_icon_compile   = iup.LoadImage("gui/icon_compile2.png")
 	img_icon_settings  = iup.LoadImage("gui/icon_settings.png")--
+	img_icon_folder_mini   = iup.LoadImage("gui/icon_folder_mini.png")
 	img_icon_settings_mini = iup.LoadImage("gui/icon_settings_mini.png")
 	img_icon_update_mini   = iup.LoadImage("gui/icon_update_mini.png")
 	img_icon_test_compiler = iup.LoadImage("gui/icon_test_compiler_mini.png")

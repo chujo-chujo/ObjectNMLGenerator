@@ -31,8 +31,10 @@ settings = {
 	last_used_folder = default_path,
 	last_export_filename = "generated.nml",
 
+	menu_path_to_openttd = os.getenv("USERPROFILE") .. "\\Documents\\OpenTTD\\newgrf",
+	menu_copy_to_openttd = "OFF",
 	menu_last_check_update = "1970-01-01",
-	menu_auto_check_update = "YES",
+	menu_auto_check_update = "ON",
 
 	show_preview_file = {
 		index = 1,
@@ -163,7 +165,7 @@ function config.save_settings()
 		-- Sort keys alphabetically
 		local keys = {}
 		for k, _ in pairs(settings) do
-		    keys[#keys + 1] = k
+			keys[#keys + 1] = k
 		end
 		table.sort(keys)
 
